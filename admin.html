@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Findit Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #1a3560;
+      --navy-dark: #0f2240;
+      --gold: #c9a227;
+      --gold-light: #e8c04a;
+      --cream: #f8f7f4;
+      --white: #ffffff;
+      --gray: #6b7280;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: #1a1a2e;
+    }
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy-dark), var(--navy));
+    }
+    .login-box {
+      background: var(--white);
+      padding: 48px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+    }
+    .login-box h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .login-box p {
+      color: var(--gray);
+      margin-bottom: 32px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid rgba(26,53,96,0.15);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color .2s;
+    }
+    .form-group input:focus {
+      border-color: var(--navy);
+      outline: none;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: var(--navy-dark); }
+    /* Dashboard */
+    .dashboard { display: none; }
+    .dashboard.active { display: block; }
+    .header {
+      background: var(--navy);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--white);
+    }
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.15);
+      color: var(--white);
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .main {
+      padding: 40px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: var(--white);
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(26,53,96,0.08);
+    }
+    .stat-card h3 {
+      font-size: .8rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--navy);
+    }
+    .section {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 20px rgba(26,53,96,0.08);
+    }
+    .section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--navy);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      background: var(--cream);
+      cursor: pointer;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab.active {
+      background: var(--navy);
+      color: var(--white);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--cream);
+    }
+    th {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--gray);
+      font-weight: 700;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-badge.pending { background: rgba(201,162,39,0.15); color: #b8911e; }
+    .status-badge.resolved { background: rgba(34,197,94,0.15); color: #16a34a; }
+    .status-badge.claimed { background: rgba(26,53,96,0.15); color: var(--navy); }
+    .action-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .action-btn.danger { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .action-btn.success { background: rgba(34,197,94,0.1); color: #16a34a; }
+    @media(max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media(max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .header { padding: 16px 20px; }
+      .main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h2>🔐 Admin Login</h2>
+    <p>Enter your admin credentials</p>
+    <div class="form-group">
+      <label>Admin Email</label>
+      <input type="email" id="adminEmail" placeholder="admin@findit.campus">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <header class="header">
+    <h1>📋 Findit Admin</h1>
+    <div class="header-right">
+      <span id="adminName">Admin</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Users</h3>
+        <div class="value" id="totalUsers">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Items</h3>
+        <div class="value" id="totalItems">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Resolved</h3>
+        <div class="value" id="resolvedItems">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Messages</h3>
+        <div class="value" id="totalMessages">-</div>
+      </div>
+    </div>
+
+    <!-- Items Section -->
+    <div class="section">
+      <h2>📦 Item Management</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="filterItems('all', this)">All</button>
+        <button class="tab" onclick="filterItems('pending', this)">Pending</button>
+        <button class="tab" onclick="filterItems('resolved', this)">Resolved</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="itemsTable">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Users Section -->
+    <div class="section">
+      <h2>👥 User Management</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Student ID</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersTable">
+          <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API_URL = 'http://localhost:5000/api';
+  let token = localStorage.getItem('adminToken');
+
+  // Login
+  async function adminLogin() {
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+
+    try {
+      const res = await fetch(`${API_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        token = data.token;
+        localStorage.setItem('adminToken', token);
+        showDashboard();
+      } else {
+        alert(data.message || 'Login failed');
+      }
+    } catch (err) {
+      alert('Connection error. Make sure backend is running.');
+    }
+  }
+
+  // Show Dashboard
+  async function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    await loadStats();
+    await loadItems();
+    await loadUsers();
+  }
+
+  // Load Stats
+  async function loadStats() {
+    try {
+      const res = await fetch(`${API_URL}/admin/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('totalUsers').textContent = data.stats.users.total;
+        document.getElementById('totalItems').textContent = data.stats.items.total;
+        document.getElementById('resolvedItems').textContent = data.stats.items.resolved;
+        document.getElementById('totalMessages').textContent = data.stats.messages.total;
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  // Load Items
+  async function loadItems(status = '') {
+    try {
+      const url = status ? `${API_URL}/admin/items?status=${status}` : `${API_URL}/admin/items`;
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        renderItems(data.items);
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  function renderItems(items) {
+    const tbody = document.getElementById('itemsTable');
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="6">No items found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = items.map(item => `
+      <tr>
+        <td><strong>${item.title}</strong></td>
+        <td><span class="status-badge ${item.type}" style="background:rgba(26,53,96,0.1);color:var(--navy)">${item.type}</span></td>
+        <td><span class="status-badge ${item.status}">${item.status}</span></td>
+        <td>${item.user?.firstName} ${item.user?.lastName}</td>
+        <td>${new Date(item.createdAt).toLocaleDateString()}</td>
+        <td>
+          ${item.status === 'pending' ? 
+            `<button class="action-btn success" onclick="resolveItem('${item._id}')">✓ Resolve</button>` : ''}
+          <button class="action-btn danger" onclick="deleteItem('${item._id}')">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function filterItems(status, btn) {
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    loadItems(status === 'all' ? '' : status);
+  }
+
+  // Resolve Item
+  async function resolveItem(id) {
+    if (!confirm('Mark as resolved?')) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/items/${id}/resolve`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadItems();
+        loadStats();
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  // Delete Item
+  async function deleteItem(id) {
+    if (!confirm('Reject this item?')) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/items/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadItems();
+        loadStats();
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  // Load Users
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API_URL}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        renderUsers(data.users);
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  function renderUsers(users) {
+    const tbody = document.getElementById('usersTable');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="5">No users found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(user => `
+      <tr>
+        <td>${user.firstName} ${user.lastName}</td>
+        <td>${user.email}</td>
+        <td>${user.studentId}</td>
+        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+        <td>
+          <button class="action-btn danger" onclick="deleteUser('${user._id}')">✕ Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Delete User
+  async function deleteUser(id) {
+    if (!confirm('Delete this user and all their items?')) return;
+    try {
+      const res = await fetch(`${API_URL}/admin/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadUsers();
+        loadStats();
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  // Logout
+  function logout() {
+    localStorage.removeItem('adminToken');
+    location.reload();
+  }
+
+  // Check auth on load
+  if (token) showDashboard();
+</script>
+
+</body>
+</html>
