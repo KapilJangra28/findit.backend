@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Findit — Lost & Found</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a3560;
+    --navy-dark: #0f2240;
+    --navy-light: #254880;
+    --gold: #c9a227;
+    --gold-light: #e8c04a;
+    --gold-dim: rgba(201,162,39,0.15);
+    --cream: #f8f7f4;
+    --white: #ffffff;
+    --gray: #6b7280;
+    --gray-light: #f1f3f7;
+    --text: #1a1a2e;
+    --success: #22c55e;
+    --danger: #ef4444;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--navy); border-radius: 3px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 60px;
+    background: rgba(248,247,244,0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(26,53,96,0.08);
+    transition: box-shadow .3s;
+  }
+  nav.scrolled { box-shadow: 0 4px 24px rgba(26,53,96,0.1); }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 900;
+    color: var(--navy);
+  }
+  .nav-logo span { color: var(--gold); font-style: italic; }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    text-decoration: none; color: var(--navy); font-size: .9rem;
+    font-weight: 500; letter-spacing: .02em;
+    position: relative; padding-bottom: 3px;
+    transition: color .2s;
+  }
+  .nav-links a::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px;
+    background: var(--gold); transition: width .3s;
+  }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-cta {
+    display: flex; gap: 12px;
+  }
+  .btn {
+    padding: 10px 24px; border-radius: 6px; font-size: .875rem;
+    font-weight: 600; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .2s; letter-spacing: .02em;
+  }
+  .btn-outline {
+    background: transparent; color: var(--navy);
+    border: 2px solid var(--navy);
+  }
+  .btn-outline:hover { background: var(--navy); color: var(--white); }
+  .btn-primary {
+    background: var(--navy); color: var(--white);
+  }
+  .btn-primary:hover { background: var(--navy-dark); transform: translateY(-1px); }
+  .btn-gold {
+    background: var(--gold); color: var(--white);
+  }
+  .btn-gold:hover { background: #b8911e; transform: translateY(-1px); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh; display: flex; align-items: center;
+    position: relative; overflow: hidden;
+    padding: 120px 60px 80px;
+    background: linear-gradient(135deg, #f0f4ff 0%, var(--cream) 60%);
+  }
+  .hero-bg {
+    position: absolute; top: 0; right: -10%; width: 55%;
+    height: 100%; background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity: .06;
+  }
+  .hero-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); pointer-events: none;
+  }
+  .hero-orb1 { width: 500px; height: 500px; background: rgba(26,53,96,0.07); top: -100px; right: 200px; }
+  .hero-orb2 { width: 300px; height: 300px; background: rgba(201,162,39,0.08); bottom: 50px; left: 300px; }
+
+  .hero-content { position: relative; z-index: 1; max-width: 680px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.3);
+    padding: 6px 16px; border-radius: 100px;
+    color: var(--gold); font-size: .8rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    margin-bottom: 28px;
+    animation: fadeUp .6s ease both;
+  }
+  .hero-badge::before { content: '●'; font-size: .5rem; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 1.05; font-weight: 900;
+    color: var(--navy);
+    animation: fadeUp .6s .1s ease both;
+  }
+  .hero-title .italic { font-style: italic; color: var(--gold); }
+
+  .hero-sub {
+    margin-top: 24px; font-size: 1.1rem; color: var(--gray);
+    line-height: 1.7; max-width: 520px;
+    animation: fadeUp .6s .2s ease both;
+  }
+
+  .hero-actions {
+    display: flex; gap: 16px; margin-top: 44px; flex-wrap: wrap;
+    animation: fadeUp .6s .3s ease both;
+  }
+  .btn-hero-primary {
+    padding: 14px 32px; font-size: 1rem; border-radius: 8px;
+    background: var(--navy); color: var(--white);
+    border: none; font-family: 'DM Sans', sans-serif;
+    font-weight: 600; cursor: pointer; transition: all .2s;
+    letter-spacing: .02em;
+  }
+  .btn-hero-primary:hover { background: var(--navy-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,53,96,0.25); }
+  .btn-hero-secondary {
+    padding: 14px 32px; font-size: 1rem; border-radius: 8px;
+    background: transparent; color: var(--navy);
+    border: 2px solid var(--navy); font-family: 'DM Sans', sans-serif;
+    font-weight: 600; cursor: pointer; transition: all .2s;
+    letter-spacing: .02em;
+  }
+  .btn-hero-secondary:hover { background: var(--navy); color: var(--white); }
+
+  .hero-stats {
+    display: flex; gap: 48px; margin-top: 64px;
+    animation: fadeUp .6s .4s ease both;
+  }
+  .stat { }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem; font-weight: 900; color: var(--navy);
+    line-height: 1;
+  }
+  .stat-num span { color: var(--gold); }
+  .stat-label { font-size: .8rem; color: var(--gray); margin-top: 4px; letter-spacing: .04em; text-transform: uppercase; }
+
+  .hero-visual {
+    position: absolute; right: 60px; top: 50%;
+    transform: translateY(-50%);
+    width: 420px;
+    animation: fadeUp .6s .3s ease both;
+  }
+  .hero-card {
+    background: var(--white); border-radius: 20px;
+    padding: 28px; box-shadow: 0 24px 80px rgba(26,53,96,0.14);
+    border: 1px solid rgba(26,53,96,0.06);
+  }
+  .hero-card-title {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--gray); margin-bottom: 16px; font-weight: 600;
+  }
+  .item-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; border-radius: 12px; margin-bottom: 10px;
+    border: 1px solid var(--gray-light);
+    transition: all .2s; cursor: pointer;
+  }
+  .item-card:hover { border-color: var(--navy); background: #f8faff; }
+  .item-icon {
+    width: 46px; height: 46px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+  }
+  .item-icon.found { background: rgba(34,197,94,0.12); }
+  .item-icon.lost { background: rgba(239,68,68,0.1); }
+  .item-info { flex: 1; }
+  .item-name { font-weight: 600; font-size: .9rem; color: var(--navy); }
+  .item-loc { font-size: .78rem; color: var(--gray); margin-top: 2px; }
+  .item-badge {
+    font-size: .68rem; font-weight: 700; padding: 3px 9px;
+    border-radius: 100px; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .item-badge.found { background: rgba(34,197,94,0.12); color: #16a34a; }
+  .item-badge.lost { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION BASE ── */
+  section { padding: 100px 60px; }
+  .section-label {
+    display: inline-block; font-size: .75rem; text-transform: uppercase;
+    letter-spacing: .12em; color: var(--gold); font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 900; color: var(--navy); line-height: 1.15;
+  }
+  .section-title span { color: var(--gold); font-style: italic; }
+  .section-sub {
+    color: var(--gray); line-height: 1.7; margin-top: 16px;
+    max-width: 540px; font-size: 1.05rem;
+  }
+  .divider {
+    width: 56px; height: 3px; background: var(--gold);
+    border-radius: 2px; margin: 20px 0;
+  }
+
+  /* ── PROBLEM ── */
+  #problem {
+    background: var(--navy-dark);
+    color: var(--white);
+    position: relative; overflow: hidden;
+  }
+  #problem::before {
+    content: ''; position: absolute; top: -200px; right: -200px;
+    width: 600px; height: 600px; border-radius: 50%;
+    border: 2px solid rgba(201,162,39,0.1);
+  }
+  #problem::after {
+    content: ''; position: absolute; bottom: -100px; left: -100px;
+    width: 400px; height: 400px; border-radius: 50%;
+    border: 2px solid rgba(201,162,39,0.07);
+  }
+  .problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+    align-items: center; position: relative; z-index: 1;
+  }
+  #problem .section-title { color: var(--white); }
+  #problem .section-sub { color: rgba(255,255,255,0.65); }
+  .problem-cards { display: flex; flex-direction: column; gap: 16px; }
+  .problem-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 20px 24px; border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all .3s;
+  }
+  .problem-item:hover { background: rgba(255,255,255,0.09); border-color: rgba(201,162,39,0.3); }
+  .problem-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .problem-text h4 { color: var(--white); font-weight: 600; margin-bottom: 4px; }
+  .problem-text p { color: rgba(255,255,255,0.55); font-size: .88rem; line-height: 1.6; }
+
+  /* ── FEATURES ── */
+  #features { background: var(--cream); }
+  .features-header { text-align: center; margin-bottom: 60px; }
+  .features-header .section-sub { margin: 16px auto 0; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+  }
+  .feature-card {
+    background: var(--white); border-radius: 20px; padding: 36px 30px;
+    border: 1px solid rgba(26,53,96,0.07);
+    transition: all .3s; position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transform: scaleX(0); transform-origin: left; transition: transform .4s;
+  }
+  .feature-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(26,53,96,0.12); }
+  .feature-card:hover::before { transform: scaleX(1); }
+  .feature-icon-wrap {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin-bottom: 24px;
+  }
+  .feature-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 700; color: var(--navy);
+    margin-bottom: 12px;
+  }
+  .feature-desc { color: var(--gray); font-size: .92rem; line-height: 1.7; }
+
+  /* ── VERIFICATION ── */
+  #verification {
+    background: linear-gradient(135deg, #f0f4ff 0%, var(--cream) 100%);
+  }
+  .verif-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .verif-steps { display: flex; flex-direction: column; gap: 0; }
+  .verif-step {
+    display: flex; gap: 20px; padding: 24px 0;
+    border-bottom: 1px solid rgba(26,53,96,0.08);
+    transition: all .2s;
+  }
+  .verif-step:last-child { border-bottom: none; }
+  .verif-step:hover .step-num { background: var(--navy); color: var(--white); }
+  .step-num {
+    width: 40px; height: 40px; border-radius: 10px;
+    border: 2px solid var(--navy); display: flex; align-items: center;
+    justify-content: center; font-weight: 700; color: var(--navy);
+    font-size: .9rem; flex-shrink: 0; transition: all .2s;
+  }
+  .step-content h4 { font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+  .step-content p { color: var(--gray); font-size: .88rem; line-height: 1.6; }
+
+  .verif-visual {
+    background: var(--white); border-radius: 24px;
+    padding: 32px; box-shadow: 0 20px 60px rgba(26,53,96,0.1);
+    border: 1px solid rgba(26,53,96,0.06);
+  }
+  .chat-header {
+    display: flex; align-items: center; gap: 12px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--gray-light);
+    margin-bottom: 20px;
+  }
+  .chat-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--white); font-weight: 700; font-size: .9rem;
+  }
+  .chat-name { font-weight: 600; color: var(--navy); font-size: .9rem; }
+  .chat-status { font-size: .78rem; color: var(--success); }
+  .chat-lock { margin-left: auto; color: var(--gold); font-size: 1.1rem; }
+  .chat-msg {
+    margin-bottom: 12px;
+  }
+  .msg-bubble {
+    display: inline-block; padding: 10px 14px; border-radius: 12px;
+    font-size: .85rem; max-width: 78%; line-height: 1.5;
+  }
+  .msg-bubble.received {
+    background: var(--gray-light); color: var(--text);
+    border-radius: 4px 12px 12px 12px;
+  }
+  .msg-bubble.sent {
+    background: var(--navy); color: var(--white);
+    border-radius: 12px 4px 12px 12px; float: right;
+  }
+  .chat-msg.right { text-align: right; }
+  .chat-msg.right::after { content: ''; display: block; clear: both; }
+  .msg-time { font-size: .7rem; color: var(--gray); margin-top: 4px; padding: 0 4px; }
+  .chat-input-row {
+    display: flex; gap: 10px; margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--gray-light);
+  }
+  .chat-input-box {
+    flex: 1; padding: 10px 14px; border-radius: 8px;
+    border: 1px solid rgba(26,53,96,0.15); font-size: .85rem;
+    font-family: 'DM Sans', sans-serif; outline: none;
+    transition: border-color .2s;
+  }
+  .chat-input-box:focus { border-color: var(--navy); }
+  .chat-send-btn {
+    padding: 10px 18px; background: var(--navy); color: var(--white);
+    border: none; border-radius: 8px; cursor: pointer;
+    font-size: .85rem; transition: all .2s;
+  }
+  .chat-send-btn:hover { background: var(--navy-dark); }
+
+  /* ── COMPARISON ── */
+  #comparison { background: var(--navy-dark); }
+  #comparison .section-title { color: var(--white); }
+  #comparison .section-sub { color: rgba(255,255,255,0.6); }
+  .comp-header { margin-bottom: 48px; }
+  .comp-table {
+    width: 100%; border-collapse: collapse; border-radius: 16px;
+    overflow: hidden;
+  }
+  .comp-table thead tr {
+    background: var(--gold);
+  }
+  .comp-table th {
+    padding: 18px 28px; text-align: left;
+    font-size: .85rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--white); font-weight: 700;
+  }
+  .comp-table td {
+    padding: 18px 28px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: .92rem;
+  }
+  .comp-table tbody tr:last-child td { border-bottom: none; }
+  .comp-table tbody tr { background: rgba(255,255,255,0.04); transition: background .2s; }
+  .comp-table tbody tr:hover { background: rgba(255,255,255,0.07); }
+  .comp-table td:first-child { color: rgba(255,255,255,0.8); font-weight: 500; }
+  .comp-table td.good { color: var(--gold); font-weight: 600; }
+  .comp-table td.bad { color: rgba(255,255,255,0.4); }
+  .check { color: var(--success); margin-right: 6px; }
+  .cross { color: rgba(255,255,255,0.3); margin-right: 6px; }
+
+  /* ── MONETIZATION ── */
+  #monetization { background: var(--cream); }
+  .mono-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; margin-top: 56px; }
+  .mono-card {
+    border-radius: 20px; padding: 36px 28px;
+    border: 1px solid rgba(26,53,96,0.09);
+    background: var(--white);
+    position: relative; overflow: hidden; transition: all .3s;
+  }
+  .mono-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(26,53,96,0.12); }
+  .mono-tag {
+    position: absolute; top: 20px; right: 20px;
+    background: var(--gold-dim); color: var(--gold);
+    border: 1px solid rgba(201,162,39,0.25);
+    font-size: .7rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 100px; text-transform: uppercase; letter-spacing: .06em;
+  }
+  .mono-icon { font-size: 2.4rem; margin-bottom: 20px; }
+  .mono-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem; font-weight: 700; color: var(--navy);
+    margin-bottom: 12px;
+  }
+  .mono-desc { color: var(--gray); font-size: .9rem; line-height: 1.7; }
+  .mono-price {
+    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--gray-light);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .mono-price .price { font-size: 1.4rem; font-weight: 700; color: var(--navy); font-family: 'Playfair Display', serif; }
+  .mono-price .price-label { font-size: .78rem; color: var(--gray); }
+
+  /* ── REPORT FORMS ── */
+  #report { background: linear-gradient(135deg, #f0f4ff 0%, var(--cream) 100%); }
+  .report-tabs {
+    display: flex; gap: 0; background: rgba(26,53,96,0.07);
+    border-radius: 12px; padding: 4px; width: fit-content; margin-bottom: 40px;
+  }
+  .report-tab {
+    padding: 11px 28px; border-radius: 9px; border: none;
+    background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 600;
+    color: var(--gray); transition: all .2s;
+  }
+  .report-tab.active {
+    background: var(--navy); color: var(--white);
+    box-shadow: 0 4px 12px rgba(26,53,96,0.2);
+  }
+  .report-form-wrap { display: none; }
+  .report-form-wrap.active { display: block; }
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-size: .85rem; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+  input[type="text"], input[type="email"], input[type="tel"], select, textarea {
+    width: 100%; padding: 12px 16px; border-radius: 10px;
+    border: 1.5px solid rgba(26,53,96,0.15);
+    font-family: 'DM Sans', sans-serif; font-size: .9rem;
+    background: var(--white); color: var(--text);
+    transition: border-color .2s, box-shadow .2s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(26,53,96,0.07);
+  }
+  textarea { resize: vertical; min-height: 110px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .upload-area {
+    border: 2px dashed rgba(26,53,96,0.2); border-radius: 12px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    background: rgba(26,53,96,0.02); transition: all .2s;
+  }
+  .upload-area:hover { border-color: var(--navy); background: rgba(26,53,96,0.05); }
+  .upload-area .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .upload-area p { color: var(--gray); font-size: .88rem; }
+  .upload-area input[type="file"] { display: none; }
+  .map-placeholder {
+    border-radius: 16px; overflow: hidden; height: 280px;
+    background: linear-gradient(135deg, #e8eef8, #d4def5);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; cursor: pointer;
+    border: 1.5px solid rgba(26,53,96,0.1);
+    position: relative; transition: all .2s;
+  }
+  .map-placeholder:hover { border-color: var(--navy); }
+  .map-pin { font-size: 3rem; animation: bounce .8s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .map-placeholder p { color: var(--navy); font-weight: 600; }
+  .map-placeholder small { color: var(--gray); font-size: .8rem; }
+  .map-grid-dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(26,53,96,0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* ── SEARCH ── */
+  #search-section {
+    background: var(--white); padding: 80px 60px;
+  }
+  .search-bar-wrap {
+    display: flex; gap: 12px; margin: 36px 0;
+  }
+  .search-input {
+    flex: 1; padding: 14px 20px; border-radius: 10px;
+    border: 2px solid rgba(26,53,96,0.15);
+    font-size: 1rem; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color .2s;
+  }
+  .search-input:focus { border-color: var(--navy); }
+  .filter-row {
+    display: flex; gap: 12px; margin-bottom: 36px; flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 7px 18px; border-radius: 100px;
+    border: 1.5px solid rgba(26,53,96,0.15);
+    background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: .82rem;
+    font-weight: 600; color: var(--navy); transition: all .2s;
+  }
+  .filter-chip:hover, .filter-chip.active {
+    background: var(--navy); color: var(--white); border-color: var(--navy);
+  }
+  .items-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .listing-card {
+    background: var(--white); border-radius: 16px;
+    border: 1px solid rgba(26,53,96,0.08);
+    overflow: hidden; transition: all .3s; cursor: pointer;
+  }
+  .listing-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(26,53,96,0.12); }
+  .listing-img {
+    height: 160px; display: flex; align-items: center; justify-content: center;
+    font-size: 4rem; background: var(--gray-light);
+  }
+  .listing-body { padding: 18px; }
+  .listing-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .listing-name { font-weight: 700; font-size: 1rem; color: var(--navy); }
+  .listing-cat { font-size: .75rem; color: var(--gray); margin-top: 4px; }
+  .listing-loc { font-size: .82rem; color: var(--gray); margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .listing-date { font-size: .75rem; color: var(--gray); margin-top: 4px; }
+  .listing-footer {
+    padding: 12px 18px; border-top: 1px solid var(--gray-light);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .claim-btn {
+    padding: 7px 18px; border-radius: 7px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: .82rem; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .claim-btn.found { background: rgba(34,197,94,0.1); color: #16a34a; }
+  .claim-btn.found:hover { background: #16a34a; color: var(--white); }
+  .claim-btn.lost { background: rgba(239,68,68,0.1); color: #dc2626; }
+  .claim-btn.lost:hover { background: #dc2626; color: var(--white); }
+
+  /* ── QUOTE ── */
+  #quote {
+    background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+    text-align: center; padding: 120px 60px;
+  }
+  .quote-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 8rem; line-height: 0.5; color: rgba(201,162,39,0.2);
+    margin-bottom: 32px; display: block;
+  }
+  .quote-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.6rem); font-style: italic;
+    color: var(--white); max-width: 780px; margin: 0 auto;
+    line-height: 1.5; font-weight: 700;
+  }
+  .quote-author {
+    margin-top: 36px; font-size: .8rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--gold); font-weight: 700;
+  }
+
+  /* ── CONTACT ── */
+  #contact { background: var(--cream); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+  .contact-info { }
+  .contact-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 28px;
+  }
+  .contact-icon-wrap {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+  }
+  .contact-detail h4 { font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .contact-detail p { color: var(--gray); font-size: .9rem; }
+  .contact-form {
+    background: var(--white); border-radius: 20px; padding: 40px;
+    box-shadow: 0 12px 48px rgba(26,53,96,0.08);
+    border: 1px solid rgba(26,53,96,0.06);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--navy-dark); color: rgba(255,255,255,0.7);
+    padding: 60px 60px 36px;
+  }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+  .footer-brand .nav-logo { color: var(--white); font-size: 1.6rem; margin-bottom: 16px; }
+  .footer-brand p { font-size: .88rem; line-height: 1.7; color: rgba(255,255,255,0.5); max-width: 280px; }
+  .footer-col h5 {
+    color: var(--white); font-size: .8rem; text-transform: uppercase;
+    letter-spacing: .1em; font-weight: 700; margin-bottom: 16px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 10px; }
+  .footer-col a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: .88rem; transition: color .2s; }
+  .footer-col a:hover { color: var(--gold); }
+  .footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 28px; display: flex; justify-content: space-between;
+    align-items: center;
+  }
+  .footer-bottom p { font-size: .82rem; color: rgba(255,255,255,0.35); }
+  .footer-socials { display: flex; gap: 12px; }
+  .social-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.5); text-decoration: none;
+    font-size: .9rem; transition: all .2s;
+  }
+  .social-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--white); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(10,20,40,0.7);
+    backdrop-filter: blur(6px); z-index: 2000;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 24px; padding: 40px;
+    width: 90%; max-width: 520px; position: relative;
+    box-shadow: 0 32px 100px rgba(0,0,0,0.25);
+    animation: modalIn .3s ease;
+  }
+  @keyframes modalIn { from{opacity:0;transform:scale(.92) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; background: var(--gray-light); cursor: pointer;
+    font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+    transition: all .2s; color: var(--gray);
+  }
+  .modal-close:hover { background: var(--navy); color: var(--white); }
+  .modal-title {
+    font-family: 'Playfair Display', serif; font-size: 1.6rem;
+    font-weight: 900; color: var(--navy); margin-bottom: 8px;
+  }
+  .modal-sub { color: var(--gray); font-size: .88rem; margin-bottom: 28px; }
+  .verification-qs { margin-bottom: 24px; }
+  .vq { margin-bottom: 16px; }
+  .vq label { font-size: .85rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; display: block; }
+  .vq input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1.5px solid rgba(26,53,96,0.15); font-family: 'DM Sans', sans-serif; font-size: .88rem; outline: none; }
+  .vq input:focus { border-color: var(--navy); }
+  .modal-progress { margin: 20px 0; }
+  .progress-bar { height: 4px; background: var(--gray-light); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--gold)); border-radius: 2px; transition: width .4s; }
+  .progress-label { font-size: .78rem; color: var(--gray); margin-top: 6px; }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; top: 80px; right: 24px; z-index: 3000; }
+  .toast {
+    background: var(--navy); color: var(--white); padding: 14px 20px;
+    border-radius: 12px; margin-bottom: 10px; font-size: .88rem;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(26,53,96,0.25); font-weight: 500;
+    animation: toastIn .3s ease; border-left: 4px solid var(--gold);
+  }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  @keyframes toastIn { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+
+  /* ── HAMBURGER ── */
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; }
+  .hamburger span { display: block; width: 24px; height: 2px; background: var(--navy); border-radius: 2px; transition: all .3s; }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity .6s, transform .6s; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:1024px) {
+    nav { padding: 16px 32px; }
+    section { padding: 80px 32px; }
+    #hero { padding: 120px 32px 80px; }
+    .hero-visual { display: none; }
+    .features-grid, .mono-grid { grid-template-columns: 1fr 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .problem-grid, .verif-grid, .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+    .report-grid { grid-template-columns: 1fr; }
+  }
+  @media(max-width:640px) {
+    nav { padding: 14px 20px; }
+    .nav-links, .nav-cta { display: none; }
+    .hamburger { display: flex; }
+    section { padding: 64px 20px; }
+    #hero { padding: 100px 20px 60px; }
+    .features-grid, .mono-grid, .footer-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 28px; flex-wrap: wrap; }
+    .form-row { grid-template-columns: 1fr; }
+    .comp-table { font-size: .8rem; }
+    .comp-table th, .comp-table td { padding: 12px 14px; }
+    .search-bar-wrap { flex-direction: column; }
+    #quote { padding: 80px 20px; }
+    footer { padding: 48px 20px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">Findit <span>Lost & Found</span></div>
+  <ul class="nav-links">
+    <li><a href="#hero">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#search-section">Browse</a></li>
+    <li><a href="#report">Report</a></li>
+    <li><a href="#monetization">Pricing</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-cta">
+    <button class="btn btn-outline" onclick="openModal('login')">Sign In</button>
+    <button class="btn btn-gold" onclick="openModal('signup')">Get Started</button>
+  </div>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-orb hero-orb1"></div>
+  <div class="hero-orb hero-orb2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🟢 Live on Campus</div>
+    <h1 class="hero-title">
+      Find What<br>You've <span class="italic">Lost.</span>
+    </h1>
+    <p class="hero-sub">A secure platform reuniting campus and hostel students with their valuable belongings — faster, safer, and smarter than ever before.</p>
+    <div class="hero-actions">
+      <button class="btn-hero-primary" onclick="scrollTo('rseport')">Report an Item</button>
+      <button class="btn-hero-secondary" onclick="scrollTo('search-section')">Browse Items</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">20<span></span></div>
+        <div class="stat-label">Items Reunited</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">98<span>%</span></div>
+        <div class="stat-label">Return Rate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">CGC<span> Jhanjeri</span></div>
+        <div class="stat-label">Campus</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-card">
+      <div class="hero-card-title">📍 Recent Activity</div>
+      <div class="item-card" onclick="showToast('Item details loaded!','✓')">
+        <div class="item-icon found">📱</div>
+        <div class="item-info">
+          <div class="item-name">iPhone 14 Pro</div>
+          <div class="item-loc">📍 Library, 3rd Floor · 20 min ago</div>
+        </div>
+        <span class="item-badge found">Found</span>
+      </div>
+      <div class="item-card" onclick="showToast('Item details loaded!','✓')">
+        <div class="item-icon lost">👛</div>
+        <div class="item-info">
+          <div class="item-name">Brown Wallet</div>
+          <div class="item-loc">📍 Canteen Block B · 1 hr ago</div>
+        </div>
+        <span class="item-badge lost">Lost</span>
+      </div>
+      <div class="item-card" onclick="showToast('Item details loaded!','✓')">
+        <div class="item-icon found">🎒</div>
+        <div class="item-info">
+          <div class="item-name">Blue Backpack</div>
+          <div class="item-loc">📍 Hostel C Gate · 2 hr ago</div>
+        </div>
+        <span class="item-badge found">Found</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="problem-grid">
+    <div class="reveal">
+      <span class="section-label">The Problem</span>
+      <h2 class="section-title" style="color:var(--white)">The Campus <span>Dilemma</span></h2>
+      <div class="divider"></div>
+      <p class="section-sub">Navigating a bustling campus means students frequently misplace essential items. Traditional recovery methods are broken.</p>
+    </div>
+    <div class="problem-cards reveal">
+      <div class="problem-item">
+        <div class="problem-icon">📋</div>
+        <div class="problem-text">
+          <h4>Paper Notices Fail</h4>
+          <p>Physical bulletin boards are outdated, easily removed, and reach only a fraction of the campus community.</p>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-icon">💬</div>
+        <div class="problem-text">
+          <h4>Chat Groups Are Chaotic</h4>
+          <p>Social media groups flood users with spam, expose personal details, and provide zero identity verification.</p>
+        </div>
+      </div>
+      <div class="problem-item">
+        <div class="problem-icon">🔓</div>
+        <div class="problem-text">
+          <h4>No Security Whatsoever</h4>
+          <p>Anyone can claim a found item, creating significant risk of theft and exploitation for vulnerable students.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-header reveal">
+    <span class="section-label">Core Features</span>
+    <h2 class="section-title">Built for <span>Security</span> & Speed</h2>
+    <div class="divider" style="margin:20px auto"></div>
+    <p class="section-sub">Three powerful pillars that make Findit the most trusted lost and found platform on campus.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">📍</div>
+      <div class="feature-title">Location Tags</div>
+      <p class="feature-desc">Finders drop a precise digital pin, instantly alerting all students in the exact campus vicinity. Real-time geofencing ensures the right people are notified at the right time.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">📸</div>
+      <div class="feature-title">Photo Uploads</div>
+      <p class="feature-desc">Capture and upload a clear photo of the found item immediately. Our AI-assisted visual matching aids in swift, accurate identification so owners can spot their belongings instantly.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon-wrap">🛡️</div>
+      <div class="feature-title">Owner Verification</div>
+      <p class="feature-desc">Items are returned safely through hidden questionnaires and secure, private in-app communication channels — ensuring only the true owner can claim their belongings.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFICATION -->
+<section id="verification">
+  <div class="verif-grid">
+    <div class="reveal">
+      <span class="section-label">Trust & Safety</span>
+      <h2 class="section-title">Rigorous <span>Verification</span></h2>
+      <div class="divider"></div>
+      <p class="section-sub">Protecting sensitive belongings with absolute certainty — our multi-layer system leaves no room for fraud.</p>
+      <div class="verif-steps">
+        <div class="verif-step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Confidential Details</h4>
+            <p>Claimants must accurately describe hidden features of the item prior to meetup — details only the real owner would know.</p>
+          </div>
+        </div>
+        <div class="verif-step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Identity Confirmation</h4>
+            <p>For vital items like University ID cards, the app mandates an encrypted digital student ID match before any handoff.</p>
+          </div>
+        </div>
+        <div class="verif-step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Secure Chat</h4>
+            <p>Our privacy-first chat masks all personal contact details, so you can coordinate safely without exposing your identity.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="verif-visual">
+        <div class="chat-header">
+          <div class="chat-avatar">A</div>
+          <div>
+            <div class="chat-name">Anonymous User #4821</div>
+            <div class="chat-status">● Verified Student</div>
+          </div>
+          <div class="chat-lock">🔒</div>
+        </div>
+        <div id="chatMessages">
+          <div class="chat-msg">
+            <div class="msg-bubble received">Hi, I found your wallet near the library. Can you verify it's yours?</div>
+            <div class="msg-time">2:14 PM</div>
+          </div>
+          <div class="chat-msg right">
+            <div class="msg-bubble sent">Yes! It's a brown leather wallet with a blue stitching on the corner.</div>
+            <div class="msg-time">2:15 PM ✓✓</div>
+          </div>
+          <div class="chat-msg">
+            <div class="msg-bubble received">Correct ✅ Verification passed. Let's arrange a meetup!</div>
+            <div class="msg-time">2:15 PM</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input-box" id="chatInput" placeholder="Type a secure message…" onkeydown="handleChat(event)">
+          <button class="chat-send-btn" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEARCH & BROWSE -->
+<section id="search-section">
+  <div class="reveal">
+    <span class="section-label">Browse Items</span>
+    <h2 class="section-title">Find Your <span>Belongings</span></h2>
+    <div class="divider"></div>
+  </div>
+  <div class="search-bar-wrap reveal">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍  Search by item name, location, or category…" oninput="filterItems()">
+    <button class="btn btn-primary" onclick="filterItems()">Search</button>
+  </div>
+  <div class="filter-row reveal" id="filterChips">
+    <button class="filter-chip active" onclick="setFilter('all',this)">All Items</button>
+    <button class="filter-chip" onclick="setFilter('found',this)">Found</button>
+    <button class="filter-chip" onclick="setFilter('lost',this)">Lost</button>
+    <button class="filter-chip" onclick="setFilter('electronics',this)">Electronics</button>
+    <button class="filter-chip" onclick="setFilter('accessories',this)">Accessories</button>
+    <button class="filter-chip" onclick="setFilter('documents',this)">Documents</button>
+    <button class="filter-chip" onclick="setFilter('clothing',this)">Clothing</button>
+  </div>
+  <div class="items-grid" id="itemsGrid"></div>
+</section>
+
+<!-- COMPARISON -->
+<section id="comparison">
+  <div class="comp-header reveal">
+    <span class="section-label">Why Findit?</span>
+    <h2 class="section-title" style="color:var(--white)">A <span>Superior</span> Experience</h2>
+    <div class="divider"></div>
+    <p class="section-sub" style="color:rgba(255,255,255,0.6)">See how Findit outperforms every traditional method across all the metrics that matter.</p>
+  </div>
+  <table class="comp-table reveal">
+    <thead>
+      <tr>
+        <th>Capability</th>
+        <th>Findit Application</th>
+        <th>Standard Chat Groups</th>
+        <th>Paper Notices</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Item Discovery</td>
+        <td class="good"><span class="check">✓</span>Intelligent Map Filters</td>
+        <td class="bad"><span class="cross">✗</span>Inefficient Scrolling</td>
+        <td class="bad"><span class="cross">✗</span>Manual & Slow</td>
+      </tr>
+      <tr>
+        <td>Owner Authentication</td>
+        <td class="good"><span class="check">✓</span>Automated & Secure</td>
+        <td class="bad"><span class="cross">✗</span>Highly Vulnerable</td>
+        <td class="bad"><span class="cross">✗</span>None</td>
+      </tr>
+      <tr>
+        <td>Data Privacy</td>
+        <td class="good"><span class="check">✓</span>Complete Anonymity</td>
+        <td class="bad"><span class="cross">✗</span>Exposed Details</td>
+        <td class="bad"><span class="cross">✗</span>Fully Public</td>
+      </tr>
+      <tr>
+        <td>Real-time Notifications</td>
+        <td class="good"><span class="check">✓</span>Instant Push Alerts</td>
+        <td class="bad"><span class="cross">✗</span>Group Noise</td>
+        <td class="bad"><span class="cross">✗</span>Not Possible</td>
+      </tr>
+      <tr>
+        <td>Photo Evidence</td>
+        <td class="good"><span class="check">✓</span>AI-Assisted Matching</td>
+        <td class="bad"><span class="cross">✗</span>Unreliable Uploads</td>
+        <td class="bad"><span class="cross">✗</span>Not Possible</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- MONETIZATION -->
+<section id="monetization">
+  <div class="reveal">
+    <span class="section-label">Business Model</span>
+    <h2 class="section-title">Generating <span>Revenue</span></h2>
+    <div class="divider"></div>
+    <p class="section-sub">A sophisticated model designed to sustain the platform while providing immense value to the academic ecosystem.</p>
+  </div>
+  <div class="mono-grid">
+    <div class="mono-card reveal">
+      <span class="mono-tag">Per Use</span>
+      <div class="mono-icon">🚀</div>
+      <div class="mono-title">Premium Boosts</div>
+      <p class="mono-desc">For urgent items like wallets, users pay a small one-time fee to push priority notifications to all nearby students — ensuring maximum visibility instantly.</p>
+      <div class="mono-price">
+        <span class="price">₹49</span>
+        <span class="price-label">per boost</span>
+      </div>
+    </div>
+    <div class="mono-card reveal">
+      <span class="mono-tag">On Success</span>
+      <div class="mono-icon">🤝</div>
+      <div class="mono-title">Reward Commissions</div>
+      <p class="mono-desc">Owners can offer a monetary reward. Findit securely holds the funds in escrow and retains a 5% commission only upon a verified, successful return.</p>
+      <div class="mono-price">
+        <span class="price">5%</span>
+        <span class="price-label">commission on reward</span>
+      </div>
+    </div>
+    <div class="mono-card reveal">
+      <span class="mono-tag">B2B</span>
+      <div class="mono-icon">🏛️</div>
+      <div class="mono-title">B2B Subscriptions</div>
+      <p class="mono-desc">Universities subscribe on a monthly basis to officially digitize their outdated lost-and-found departments — complete with admin dashboard and analytics.</p>
+      <div class="mono-price">
+        <span class="price">₹4,999</span>
+        <span class="price-label">/ month per campus</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPORT FORM -->
+<section id="report">
+  <div class="reveal">
+    <span class="section-label">Take Action</span>
+    <h2 class="section-title">Report an <span>Item</span></h2>
+    <div class="divider"></div>
+    <p class="section-sub">Lost something? Found something? Report it in seconds and let our system handle the rest.</p>
+  </div>
+  <div style="margin-top:40px">
+    <div class="report-tabs reveal">
+      <button class="report-tab active" onclick="switchTab('found')">📦 I Found an Item</button>
+      <button class="report-tab" onclick="switchTab('lost')">🔍 I Lost an Item</button>
+    </div>
+
+    <!-- FOUND FORM -->
+    <div class="report-form-wrap active" id="foundForm">
+      <div class="report-grid">
+        <div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Item Name *</label>
+              <input type="text" placeholder="e.g. Blue Backpack" id="f-name">
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="f-cat">
+                <option value="">Select category</option>
+                <option>Electronics</option>
+                <option>Accessories</option>
+                <option>Documents / ID Cards</option>
+                <option>Clothing</option>
+                <option>Books / Stationery</option>
+                <option>Keys</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Where did you find it? *</label>
+            <input type="text" placeholder="e.g. Main Library, 3rd Floor Reading Room" id="f-loc">
+          </div>
+          <div class="form-group">
+            <label>Item Description *</label>
+            <textarea placeholder="Describe the item in detail — color, brand, unique features. Include one hidden detail that only the owner would know." id="f-desc"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Your Contact (private & secure)</label>
+            <input type="email" placeholder="your@university.edu" id="f-email">
+          </div>
+          <div class="form-group">
+            <label>Upload Photo</label>
+            <div class="upload-area" onclick="document.getElementById('f-photo').click()">
+              <div class="upload-icon">📷</div>
+              <p>Click to upload or drag & drop</p>
+              <p style="margin-top:4px;font-size:.75rem">PNG, JPG up to 10MB</p>
+              <input type="file" id="f-photo" accept="image/*" onchange="handleUpload(this,'found')">
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;border-radius:10px" onclick="submitFoundForm()">Submit Found Item →</button>
+        </div>
+        <div>
+          <div class="form-group">
+            <label>📍 Drop Location Pin</label>
+            <div class="map-placeholder" onclick="showToast('Map opened! Drop your pin.','📍')">
+              <div class="map-grid-dots"></div>
+              <div class="map-pin">📍</div>
+              <p>Tap to set location</p>
+              <small>Alerts nearby students instantly</small>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:20px">
+            <label>Set Verification Questions (Hidden from public)</label>
+            <textarea placeholder="e.g. What sticker is on the back of the laptop? What color is the phone case?" id="f-verif" style="min-height:120px"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Priority Boost (Optional)</label>
+            <div style="background:var(--gold-dim);border:1px solid rgba(201,162,39,.25);border-radius:12px;padding:16px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                <input type="checkbox" id="boost" style="width:18px;height:18px">
+                <label for="boost" style="margin:0;font-size:.9rem;cursor:pointer">Add Priority Boost — ₹49</label>
+              </div>
+              <p style="font-size:.8rem;color:var(--gray)">Push notification sent to all students in the vicinity for 24 hours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOST FORM -->
+    <div class="report-form-wrap" id="lostForm">
+      <div class="report-grid">
+        <div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Item Name *</label>
+              <input type="text" placeholder="e.g. iPhone 14 Pro" id="l-name">
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="l-cat">
+                <option value="">Select category</option>
+                <option>Electronics</option>
+                <option>Accessories</option>
+                <option>Documents / ID Cards</option>
+                <option>Clothing</option>
+                <option>Books / Stationery</option>
+                <option>Keys</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Where did you last see it? *</label>
+            <input type="text" placeholder="e.g. Hostel C Common Room" id="l-loc">
+          </div>
+          <div class="form-group">
+            <label>Item Description *</label>
+            <textarea placeholder="Describe your item — color, brand, model, unique marks. The more detail, the better." id="l-desc"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Your Contact (private & secure)</label>
+            <input type="email" placeholder="your@university.edu" id="l-email">
+          </div>
+          <div class="form-group">
+            <label>Offer a Reward? (Optional)</label>
+            <input type="text" placeholder="e.g. ₹500 reward for safe return" id="l-reward">
+          </div>
+          <button class="btn btn-gold" style="width:100%;padding:14px;font-size:1rem;border-radius:10px" onclick="submitLostForm()">Submit Lost Item →</button>
+        </div>
+        <div>
+          <div class="form-group">
+            <label>📍 Last Known Location</label>
+            <div class="map-placeholder" onclick="showToast('Map opened! Mark your last location.','📍')">
+              <div class="map-grid-dots"></div>
+              <div class="map-pin">🔍</div>
+              <p>Tap to mark location</p>
+              <small>Helps finders in the right area find you</small>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:20px">
+            <label>Date & Time Lost</label>
+            <input type="text" placeholder="e.g. Today, around 3:00 PM" id="l-time">
+          </div>
+          <div class="form-group">
+            <label>Any additional notes?</label>
+            <textarea placeholder="Any context that might help — what you were doing, who you were with, etc." id="l-notes" style="min-height:100px"></textarea>
+          </div>
+          <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:16px">
+            <p style="font-size:.82rem;color:#dc2626;font-weight:600">🔔 Instant Alerts Active</p>
+            <p style="font-size:.78rem;color:var(--gray);margin-top:4px">You'll be notified the moment a matching item is found nearby.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section id="quote">
+  <span class="quote-mark">"</span>
+  <p class="quote-text">We restore peace of mind by securely returning what matters most to our students.</p>
+  <div class="quote-author">— The Findit Operations Team</div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-grid">
+    <div class="reveal">
+      <span class="section-label">Get In Touch</span>
+      <h2 class="section-title">Let's <span>Connect</span></h2>
+      <div class="divider"></div>
+      <p class="section-sub" style="margin-bottom:40px">Whether you're a student, university administrator, or investor — we'd love to hear from you.</p>
+      <div class="contact-item">
+        <div class="contact-icon-wrap">📧</div>
+        <div class="contact-detail"><h4>Email Us</h4><p>hello@findit.campus</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon-wrap">📞</div>
+        <div class="contact-detail"><h4>Call Us</h4><p>+91 98765 43210</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon-wrap">🏛️</div>
+        <div class="contact-detail"><h4>University Partnerships</h4><p>partner@findit.campus</p></div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon-wrap">📍</div>
+        <div class="contact-detail"><h4>Headquarters</h4><p>Ludhiana, Punjab, India</p></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="contact-form">
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--navy);margin-bottom:24px">Send a Message</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Name</label><input type="text" placeholder="Your name" id="c-name"></div>
+          <div class="form-group"><label>Email</label><input type="email" placeholder="your@email.com" id="c-email"></div>
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <select id="c-subject">
+            <option>General Inquiry</option>
+            <option>University Partnership</option>
+            <option>Investment Opportunity</option>
+            <option>Technical Support</option>
+            <option>Press & Media</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea placeholder="Tell us how we can help…" id="c-msg"></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:1rem;border-radius:10px" onclick="submitContact()">Send Message →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo">Findit <span>Lost & Found</span></div>
+      <p>Reuniting campus communities with their belongings — securely, swiftly, and with complete anonymity.</p>
+    </div>
+    <div class="footer-col">
+      <h5>Platform</h5>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#verification">Verification</a></li>
+        <li><a href="#search-section">Browse Items</a></li>
+        <li><a href="#report">Report Item</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Business</h5>
+      <ul>
+        <li><a href="#monetization">Pricing</a></li>
+        <li><a href="#contact">Partnerships</a></li>
+        <li><a href="#contact">Universities</a></li>
+        <li><a href="#contact">Investors</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Findit Lost & Found. All rights reserved.</p>
+    <div class="footer-socials">
+      <a class="social-btn" href="#" title="Instagram">📸</a>
+      <a class="social-btn" href="#" title="Twitter">🐦</a>
+      <a class="social-btn" href="#" title="LinkedIn">💼</a>
+      <a class="social-btn" href="#" title="WhatsApp">💬</a>
+    </div>
+  </div>
+</footer>
+
+<!-- MODALS -->
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">✕</button>
+    <div class="modal-title">Welcome Back</div>
+    <div class="modal-sub">Sign in to your Findit account</div>
+    <div class="form-group"><label>University Email</label><input type="email" placeholder="your@university.edu" id="login-email"></div>
+    <div class="form-group"><label>Password</label><input type="text" placeholder="••••••••" id="login-pass"></div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;border-radius:10px;font-size:.95rem" onclick="handleLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--gray)">Don't have an account? <a href="#" style="color:var(--navy);font-weight:600" onclick="switchModal('login','signup')">Sign up</a></p>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('signup')">✕</button>
+    <div class="modal-title">Join Findit</div>
+    <div class="modal-sub">Create your secure campus account</div>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" placeholder="Kapil" id="su-fname"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" placeholder="Jangra" id="su-lname"></div>
+    </div>
+    <div class="form-group"><label>University Email</label><input type="email" placeholder="your@university.edu" id="su-email"></div>
+    <div class="form-group"><label>Student ID</label><input type="text" placeholder="e.g. 2021CSE1234" id="su-id"></div>
+    <div class="form-group"><label>Password</label><input type="text" placeholder="Create a strong password" id="su-pass"></div>
+    <div class="modal-progress">
+      <div class="progress-bar"><div class="progress-fill" id="signupProgress" style="width:0%"></div></div>
+      <div class="progress-label" id="progressLabel">Fill in your details to get started</div>
+    </div>
+    <button class="btn btn-gold" style="width:100%;padding:13px;border-radius:10px;font-size:.95rem" onclick="handleSignup()">Create Account</button>
+    <p style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--gray)">Already have an account? <a href="#" style="color:var(--navy);font-weight:600" onclick="switchModal('signup','login')">Sign in</a></p>
+  </div>
+</div>
+
+<!-- Claim Modal -->
+<div class="modal-overlay" id="claimModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('claim')">✕</button>
+    <div class="modal-title">Verify Ownership</div>
+    <div class="modal-sub">Answer the verification questions to prove this is your item. Only the true owner will know these answers.</div>
+    <div class="verification-qs">
+      <div class="vq">
+        <label>What is the brand/make of the item?</label>
+        <input type="text" placeholder="Type your answer…" id="vq1">
+      </div>
+      <div class="vq">
+        <label>Describe a unique marking, sticker, or feature on the item.</label>
+        <input type="text" placeholder="Type your answer…" id="vq2">
+      </div>
+      <div class="vq">
+        <label>What was the last app/document you used on this device (if applicable)?</label>
+        <input type="text" placeholder="Type your answer…" id="vq3">
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;border-radius:10px" onclick="submitClaim()">Submit Verification →</button>
+  </div>
+</div>
+
+<script>
+  // ── BACKEND CONFIG ──
+  const API_URL = 'http://localhost:5000/api';
+  const socket = io('http://localhost:5000');
+
+  // ── AUTH HELPERS ──
+  function getToken() { return localStorage.getItem('findit_token'); }
+  function getUser() { return JSON.parse(localStorage.getItem('findit_user') || 'null'); }
+  function isLoggedIn() { return !!getToken(); }
+
+  function setAuth(token, user) {
+    localStorage.setItem('findit_token', token);
+    localStorage.setItem('findit_user', JSON.stringify(user));
+  }
+
+  function clearAuth() {
+    localStorage.removeItem('findit_token');
+    localStorage.removeItem('findit_user');
+  }
+
+  // Socket connection
+  const user = getUser();
+  if (user && user.id) {
+    socket.emit('join', user.id);
+  }
+
+  socket.on('newMessage', (msg) => {
+    showToast('New message! Check your chats.', '💬', 'success');
+  });
+
+  // ── DATA ──
+  let ITEMS = [];
+  let activeFilter = 'all';
+  let currentItemId = null;
+
+  // Emoji helper
+  function getEmoji(cat) {
+    const emojis = { electronics:'📱', accessories:'🎒', documents:'🪪', clothing:'👕', books:'📚', keys:'🔑', other:'📦' };
+    return emojis[cat] || '📦';
+  }
+
+  // Format date
+  function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  // Fetch from API
+  async function fetchAPI(url, options = {}) {
+    const token = getToken();
+    const headers = { 'Content-Type':'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(url, { ...options, headers });
+    return res.json();
+  }
+
+  // Load items from API
+  async function loadItems() {
+    try {
+      const params = new URLSearchParams();
+      if (activeFilter === 'found' || activeFilter === 'lost') params.append('type', activeFilter);
+      else if (activeFilter !== 'all') params.append('category', activeFilter);
+      const query = document.getElementById('searchInput').value;
+      if (query) params.append('search', query);
+      
+      const url = `${API_URL}/items${params.toString() ? '?' + params : ''}`;
+      const data = await fetchAPI(url);
+      if (data.success) {
+        ITEMS = data.items.map(item => ({
+          id: item._id,
+          name: item.title,
+          cat: item.category,
+          type: item.type,
+          emoji: getEmoji(item.category),
+          loc: item.location?.address || 'Unknown',
+          date: formatDate(item.createdAt),
+          color: item.type === 'found' ? '#4CAF50' : '#ef4444',
+          image: item.image,
+          desc: item.description,
+          status: item.status
+        }));
+        renderItems(ITEMS);
+      }
+    } catch (e) {
+      console.error('Load items error:', e);
+    }
+  }
+
+  function renderItems(data) {
+    const grid = document.getElementById('itemsGrid');
+    if (!data || !data.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--gray)"><div style="font-size:3rem;margin-bottom:16px">🔍</div><p>No items found. Be the first to report!</p></div>`;
+      return;
+    }
+    grid.innerHTML = data.map(item => `
+      <div class="listing-card" onclick="viewItem('${item.id}')">
+        <div class="listing-img" style="background:${item.type==='found'?'rgba(34,197,94,0.07)':'rgba(239,68,68,0.07)'}">${item.emoji}</div>
+        <div class="listing-body">
+          <div class="listing-top">
+            <div>
+              <div class="listing-name">${item.name}</div>
+              <div class="listing-cat">${item.cat.charAt(0).toUpperCase()+item.cat.slice(1)}</div>
+            </div>
+            <span class="item-badge ${item.type}">${item.type.toUpperCase()}</span>
+          </div>
+          <div class="listing-loc">📍 ${item.loc}</div>
+          <div class="listing-date">🗓 ${item.date}</div>
+        </div>
+        <div class="listing-footer">
+          <span style="font-size:.78rem;color:var(--gray)">Tap to ${item.type==='found'?'claim':'contact'}</span>
+          <button class="claim-btn ${item.type}" onclick="event.stopPropagation();openClaimModal('${item.id}')">${item.type==='found'?'Claim':'Contact'}</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function viewItem(id) {
+    currentItemId = id;
+    openModal('claim');
+  }
+
+  async function filterItems() {
+    await loadItems();
+  }
+
+  function setFilter(f, el) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    filterItems();
+  }
+
+  // Initial load
+  loadItems();
+
+  // ── NAV ──
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  function scrollTo(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function toggleMenu() { showToast('Mobile menu coming soon!','📱'); }
+
+  // ── TABS ──
+  function switchTab(type) {
+    document.querySelectorAll('.report-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&type==='found')||(i===1&&type==='lost')));
+    document.getElementById('foundForm').classList.toggle('active', type==='found');
+    document.getElementById('lostForm').classList.toggle('active', type==='lost');
+  }
+
+  // ── MODALS ──
+  function openModal(type) {
+    document.getElementById(type+'Modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(type) {
+    document.getElementById(type+'Modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function switchModal(from, to) {
+    closeModal(from); setTimeout(() => openModal(to), 200);
+  }
+
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if(e.target===o) { o.classList.remove('open'); document.body.style.overflow=''; }});
+  });
+
+// ── BACKEND FORMS ──
+  // Check auth helper
+  function requireAuth() {
+    if (!isLoggedIn()) {
+      openModal('login');
+      showToast('Please sign in first.','🔐','error');
+      return false;
+    }
+    return true;
+  }
+
+  // Submit Found Item
+  async function submitFoundForm() {
+    if (!requireAuth()) return;
+    const name = document.getElementById('f-name').value;
+    const category = document.getElementById('f-cat').value;
+    const loc = document.getElementById('f-loc').value;
+    const desc = document.getElementById('f-desc').value;
+    const verif = document.getElementById('f-verif').value;
+    
+    if (!name || !loc || !desc) {
+      showToast('Please fill in all required fields.','⚠️','error');
+      return;
+    }
+    
+    try {
+      const data = await fetchAPI(`${API_URL}/items`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: name,
+          type: 'found',
+          category: category || 'other',
+          description: desc,
+          location: { address: loc },
+          verificationQuestion: verif,
+          verificationAnswer: verif.split(' ')[0] || 'unknown'
+        })
+      });
+      
+      if (data.success) {
+        showToast(`Found item "${name}" reported!`,'✅','success');
+        loadItems(); // Refresh list
+        ['f-name','f-loc','f-desc','f-email','f-verif'].forEach(id => document.getElementById(id).value='');
+      } else {
+        showToast(data.message || 'Failed to report item.','⚠️','error');
+      }
+    } catch (e) {
+      showToast('Connection error. Is backend running?','⚠️','error');
+    }
+  }
+
+  // Submit Lost Item
+  async function submitLostForm() {
+    if (!requireAuth()) return;
+    const name = document.getElementById('l-name').value;
+    const category = document.getElementById('l-cat').value;
+    const loc = document.getElementById('l-loc').value;
+    const desc = document.getElementById('l-desc').value;
+    const reward = document.getElementById('l-reward').value;
+    
+    if (!name || !loc || !desc) {
+      showToast('Please fill in all required fields.','⚠️','error');
+      return;
+    }
+    
+    try {
+      const data = await fetchAPI(`${API_URL}/items`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: name,
+          type: 'lost',
+          category: category || 'other',
+          description: desc,
+          location: { address: loc },
+          reward: reward
+        })
+      });
+      
+      if (data.success) {
+        showToast(`Lost item "${name}" posted!`,'🔍','success');
+        loadItems();
+        ['l-name','l-loc','l-desc','l-email','l-reward','l-time','l-notes'].forEach(id => document.getElementById(id).value='');
+      } else {
+        showToast(data.message || 'Failed to post item.','⚠️','error');
+      }
+    } catch (e) {
+      showToast('Connection error.','⚠️','error');
+    }
+  }
+
+  // Submit Contact
+  function submitContact() {
+    showToast('Message sent! We\'ll get back to you.','📧','success');
+    ['c-name','c-email','c-msg'].forEach(id => document.getElementById(id).value='');
+  }
+
+  // Login
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-pass').value;
+    
+    if (!email || !password) {
+      showToast('Please enter your credentials.','⚠️','error');
+      return;
+    }
+    
+    try {
+      const data = await fetchAPI(`${API_URL}/auth/login`, {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      
+      if (data.success) {
+        setAuth(data.token, data.user);
+        closeModal('login');
+        showToast(`Welcome back, ${data.user.firstName}!`,'🎉','success');
+      } else {
+        showToast(data.message || 'Invalid credentials.','⚠️','error');
+      }
+    } catch (e) {
+      showToast('Connection error. Is backend running?','⚠️','error');
+    }
+  }
+
+  // Signup
+  async function handleSignup() {
+    const fname = document.getElementById('su-fname').value;
+    const lname = document.getElementById('su-lname').value;
+    const email = document.getElementById('su-email').value;
+    const studentId = document.getElementById('su-id').value;
+    const password = document.getElementById('su-pass').value;
+    
+    if (!fname || !email || !studentId || !password) {
+      showToast('Please fill in all details.','⚠️','error');
+      return;
+    }
+    
+    try {
+      const data = await fetchAPI(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        body: JSON.stringify({
+          firstName: fname,
+          lastName: lname,
+          email,
+          studentId,
+          password
+        })
+      });
+      
+      if (data.success) {
+        setAuth(data.token, data.user);
+        closeModal('signup');
+        showToast(`Welcome, ${fname}! Your account is ready.`,'🎉','success');
+      } else {
+        showToast(data.message || 'Signup failed.','⚠️','error');
+      }
+    } catch (e) {
+      showToast('Connection error.','⚠️','error');
+    }
+  }
+
+  // Verify Ownership
+  async function submitClaim() {
+    if (!requireAuth()) return;
+    if (!currentItemId) return;
+    
+    const answer = document.getElementById('vq1').value;
+    if (!answer) {
+      showToast('Please answer the verification.','⚠️','error');
+      return;
+    }
+    
+    try {
+      const data = await fetchAPI(`${API_URL}/items/${currentItemId}/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ answer })
+      });
+      
+      if (data.success) {
+        closeModal('claim');
+        showToast('Verification passed! Contact the finder.','✅','success');
+      } else {
+        showToast(data.message || 'Verification failed.','⚠️','error');
+      }
+    } catch (e) {
+      showToast('Connection error.','⚠️','error');
+    }
+  }
+
+  // Open claim modal
+  function openClaimModal(id) {
+    if (!isLoggedIn()) {
+      openModal('login');
+      showToast('Please sign in first.','🔐','error');
+      return;
+    }
+    currentItemId = id;
+    openModal('claim');
+  }
+
+  // Logout
+  function logout() {
+    clearAuth();
+    showToast('Logged out.','👋','success');
+  }
+
+  // Signup progress
+  ['su-fname','su-lname','su-email','su-id','su-pass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateProgress);
+  });
+  function updateProgress() {
+    const fields = ['su-fname','su-lname','su-email','su-id','su-pass'];
+    const filled = fields.filter(id => document.getElementById(id)?.value).length;
+    const pct = (filled / fields.length) * 100;
+    document.getElementById('signupProgress').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = pct === 100 ? 'All set! Ready to join.' : `${filled} of ${fields.length} fields completed`;
+  }
+
+  // ── CHAT ──
+  function handleChat(e) { if (e.key === 'Enter') sendChat(); }
+  function sendChat() {
+    const input = document.getElementById('chatInput');
+    const val = input.value.trim();
+    if (!val) return;
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-msg right';
+    div.innerHTML = `<div class="msg-bubble sent">${val}</div><div class="msg-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} ✓✓</div>`;
+    msgs.appendChild(div);
+    input.value = '';
+    msgs.scrollTop = msgs.scrollHeight;
+    setTimeout(() => {
+      const auto = document.createElement('div');
+      auto.className = 'chat-msg';
+      auto.innerHTML = `<div class="msg-bubble received">Thank you! I'll arrange the handoff soon. 📦</div><div class="msg-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>`;
+      msgs.appendChild(auto);
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 1200);
+  }
+
+  // ── UPLOAD ──
+  function handleUpload(input, type) {
+    if (input.files && input.files[0]) {
+      showToast(`Photo uploaded: ${input.files[0].name}`,'📷','success');
+    }
+  }
+
+  // ── TOAST ──
+  function showToast(msg, icon='ℹ️', type='') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.style.opacity='0', 3000);
+    setTimeout(() => toast.remove(), 3400);
+  }
+
+  // ── SCROLL REVEAL ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Escape key closes modals
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      ['login','signup','claim'].forEach(t => closeModal(t));
+    }
+  });
+</script>
+</body>
+</html>
