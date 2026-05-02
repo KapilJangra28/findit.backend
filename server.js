@@ -35,16 +35,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-console.log("Health route registered");
+app.get('/', (req, res) => {
+  res.send("Backend is running ✅");
+});
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Findit API is running' });
 });
+// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
+
+
 
 // Health check route
 app.get('/api/health', (req, res) => {
