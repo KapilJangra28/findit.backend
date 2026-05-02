@@ -18,7 +18,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || 'https://findit-frontend-e141.vercel.app/',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
     credentials: true
   }
 });
