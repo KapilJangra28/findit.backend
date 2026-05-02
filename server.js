@@ -17,7 +17,7 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5500',
+    origin: process.env.FRONTEND_URL || 'https://findit-frontend-zc9g.vercel.app/',
     methods: ['GET', 'POST']
   }
 });
@@ -26,7 +26,7 @@ const io = new Server(server, {
 app.use(cors({
   origin: [
     "http://localhost:5500", // for local testing
-    "https://findit-frontend-19p3.vercel.app/" // 🔥 replace with your real frontend URL
+    "https://findit-frontend-zc9g.vercel.app/" // 🔥 replace with your real frontend URL
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
