@@ -26,7 +26,7 @@ const io = new Server(server, {
 app.use(cors({
   origin: [
     "http://localhost:5500", // for local testing
-    "https://findit-frontend-19p3.vercel.app/#hero" // 🔥 replace with your real frontend URL
+    "https://findit-frontend-19p3.vercel.app/" // 🔥 replace with your real frontend URL
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
