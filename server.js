@@ -25,35 +25,29 @@ const io = new Server(server, {
 
 // Middleware
 app.use(cors({
-  origin: [
-    "http://localhost:5500", // for local testing
-    "https://findit-frontend-e141.vercel.app" // 🔥 replace with your real frontend URL
-  ],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
+app.use(express.json());
+
+// Routes
 app.get('/', (req, res) => {
   res.send("Backend is running ✅");
 });
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Findit API is running' });
+  res.json({ status: 'ok' });
 });
-// Routes
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/items', require('./routes/items'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
 
-
-
 // Health check route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Findit API is running' });
-});
 
 // Socket.io handling
 io.on('connection', (socket) => {
