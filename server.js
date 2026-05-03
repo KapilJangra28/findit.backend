@@ -18,7 +18,7 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'https://findit-frontend-two.vercel.app/',
+    origin: process.env.FRONTEND_URL || 'https://findit-frontend-vuug.vercel.app/',
     methods: ['GET', 'POST'],
     credentials: true
   }
